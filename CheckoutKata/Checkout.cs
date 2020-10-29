@@ -7,11 +7,13 @@ namespace CheckoutKata
         public decimal TotalPrice { get { return CalculateTotalPrice(); } }
         private Dictionary<Item, int> _scannedItems { get; }
         private IItemRepository _itemRepository { get; }
+        private IOfferRepository _offerRepository { get; }
 
-        public Checkout(IItemRepository itemRepository)
+        public Checkout(IItemRepository itemRepository, IOfferRepository offerRepository)
         {
             _scannedItems = new Dictionary<Item, int>();
             _itemRepository = itemRepository;
+            _offerRepository = offerRepository;
         }
 
         public void ScanItem(string sku)
@@ -30,7 +32,11 @@ namespace CheckoutKata
 
             foreach (var (item, quantity) in _scannedItems)
             {
-                totalPrice += item.UnitPrice * quantity;
+                var offerOnItem = _offerRepository.GetOfferBySKUAndQuantity(item.SKU, quantity);
+                if (offerOnItem != null)
+                    totalPrice += offerOnItem.OfferPrice;
+                else
+                    totalPrice += item.UnitPrice * quantity;
             }
 
             return totalPrice;
