@@ -56,5 +56,25 @@ namespace CheckoutKata.Tests
             var expected = offerOnItem1.OfferPrice + item2.UnitPrice;
             Assert.AreEqual(expected, _checkout.TotalPrice);
         }
+
+        [Test]
+        public void TotalPrice_picks_better_offer_when_multiple_offers_on_same_item()
+        {
+            // given
+            var item = new Item("Item1", 1.99M);
+            var offer1 = new Offer("Item1", 2.49M, 2);
+            var offer2 = new Offer("Item1", 2.99M, 3);
+            _itemRepository.Setup(x => x.GetItemBySKU("Item1")).Returns(item);
+            _offerRepository.Setup(x => x.GetOfferBySKUAndQuantity("Item1", 2)).Returns(offer1);
+            _offerRepository.Setup(x => x.GetOfferBySKUAndQuantity("Item1", 3)).Returns(offer2);
+
+            // when
+            _checkout.ScanItem("Item1");
+            _checkout.ScanItem("Item1");
+            _checkout.ScanItem("Item1");
+
+            // then
+            Assert.AreEqual(offer2.OfferPrice, _checkout.TotalPrice);
+        }
     }
 }
